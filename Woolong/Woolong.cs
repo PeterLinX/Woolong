@@ -1,4 +1,7 @@
-﻿using Neo.SmartContract.Framework;
+﻿using System;
+using System.Data.SqlTypes;
+using System.Linq.Expressions;
+using Neo.SmartContract.Framework;
 using Neo.SmartContract.Framework.Services.Neo;
 using System.Numerics;
 
@@ -36,6 +39,10 @@ namespace Woolong
         public static object Main(byte[] originator, string Event, byte[] args0, byte[] args1, byte[] args2)
        {
            BigInteger supply = 1000000;
+           string name = "Woolong";
+           string symbol = "WLG";
+           BigInteger decimals = 8;
+           
            
            if (!Runtime.CheckWitness(originator)) return false;
 
@@ -43,15 +50,23 @@ namespace Woolong
 
            if (Event == "totalSupply") return supply;
            
+           if (Event == "name") return name;
+
+           if (Event == "symbol") return symbol;
+
+           if (Event == "decimals") return decimals;
+           
            if (Event == "balanceOf") return Storage.Get(Storage.CurrentContext, args0);
             
-           if (Event == "transfer") return Transfer(originator, args0, BytesToInt(args1));
+           if (Event == "transfer") return Transfer(originator, args0, BytesToInt(args1), args2);
            
            if (Event == "transferFrom") return TransferFrom(originator, args0, args1, BytesToInt(args2));
 
            if (Event == "approve") return Approve(originator, args0, args1);
 
            if (Event == "allowance") return Allowance(args0, args1);
+           
+           if (Event == "tokenFallback") return tokenFallback(originator, BytesToInt(args0), args1)
 
            return false;
   }
@@ -98,8 +113,18 @@ namespace Woolong
         /// <returns>
         ///   Transaction Successful?
         /// </returns>
-        private static bool Transfer(byte[] originator, byte[] to, BigInteger amount)
-        {           
+        private static bool Transfer(byte[] originator, byte[] to, BigInteger amount, byte[] data)
+        {
+
+            //execute in the 'to' account if its a contract.  If it doesnt exist, fail.
+            
+            //if not a contract, do not try to invoke tokenFallback
+            tokenFallback (address, uint256, bytes) 
+        
+        
+            
+            
+            
             var originatorValue = Storage.Get(Storage.CurrentContext, originator);
             var targetValue = Storage.Get(Storage.CurrentContext, to);
             
@@ -194,6 +219,12 @@ namespace Woolong
             return BytesToInt(Storage.Get(Storage.CurrentContext, from.Concat(to)));
         }
 
+
+        private static void tokenFallback(byte[] originator, BigInteger value, byte[] data)
+        {
+            
+        }
+        
         
         private static byte[] IntToBytes(BigInteger value)
         {
